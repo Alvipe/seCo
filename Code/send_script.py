@@ -25,13 +25,11 @@ data = struct.pack('f',float(100.0))
 
 dataBack = ''
 
-jarl = timeit.default_timer()
 for i in range(len(data)):
     check = check^ord(data[i])
 check = chr(check)
 message = header+data+check+footer
 ser.write(message)
-print jorl-jarl
 for i in range(len(data)):
     dataBack = dataBack+ser.read()
 dataBack = round(struct.unpack('f',dataBack)[0],4)
