@@ -21,7 +21,7 @@ ser = serial.Serial('/dev/ttyUSB0',115200,timeout=None)
 header = chr(0xAA)
 footer = chr(0xBB)
 check = 0x00
-data = struct.pack('f',float(100))
+data = struct.pack('f',float(100.0))
 
 dataBack = ''
 
@@ -35,6 +35,3 @@ dataBack = ser.read(4)
 toc = timeit.default_timer()
 print toc-tic
 dataBack = round(struct.unpack('f',dataBack)[0],4)
-#for i in range(len(data)):
-#    dataBack = dataBack+ser.read()
-#dataBack = round(struct.unpack('f',dataBack)[0],4)
