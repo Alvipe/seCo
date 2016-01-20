@@ -1,15 +1,15 @@
+#define header 0xAA
+#define footer 0xBB
+#define dataSize 4
+
 typedef union {
     float floating;
-    byte binary[4];
+    byte binary[dataSize];
 } binaryFloat;
 
-byte header = 0xAA, footer = 0xBB;
 byte check = 0x00;
-byte rec = 0x00;
-binaryFloat data;
 
 int led1 = 9, led2 = 13;
-int i = 0;
 
 void setup() {
     Serial.begin(115200);
@@ -19,42 +19,74 @@ void setup() {
     digitalWrite(led2, LOW);
 }
 
-//byte readHeader() {
-//    if(Serial.available()>0) {
-//        rec = Serial.read();
-//    }
-//    return rec;
-//}
-
-void loop() {
+boolean waitHeader() {
+    byte rec;
     while(Serial.available()>0) {
         rec = Serial.read();
         delayMicroseconds(100);
-        if(rec!=header) {
-            digitalWrite(led2, LOW);
+        if(rec==header) {
+            return true;
         }
-        else if(rec==header) {
-            check = 0x00;
-            digitalWrite(led2, HIGH);
-            for(i=0;i<sizeof(data.binary);i++) {
-                rec = Serial.read();
-                delayMicroseconds(100);
-                data.binary[i] = rec;
-                check = check^data.binary[i];
-            }
-            Serial.write(data.binary,4);
-            analogWrite(led1,data.floating);
-        }
+        else return false;
+    }
+}
+
+byte * inMsg() {
+    byte rec;
+    static byte inBuff[4];
+    int i = 0;
+    while(Serial.available()>0) {
         rec = Serial.read();
         delayMicroseconds(100);
-        if(rec == check) {
-            for(i=0;i<5;i++) {
-                digitalWrite(led2,HIGH);
-                delay(100);
-                digitalWrite(led2,LOW);
-                delay(100);
+        if((rec!=footer)&&(i<dataSize)) {
+            inBuff[i] = rec;
+            i++;
+            if(i==4) {
+                check = Serial.read();
+                delayMicroseconds(100);
             }
         }
+        if(rec==footer) {
+            i = 0;
+            return inBuff;
+        }
+    }
+}
+
+boolean checkMsg(byte *buff) {
+    byte xorChk = 0x00;
+    int j;
+    for(j=0;j<4;j++) {
+        xorChk = xorChk^buff[j];
+    }
+    if(xorChk==check) return true;
+    else return false;
+}
+
+void blinkLed(int repeat,int bTime)
+{
+    int j;
+    for(j=0;j<repeat;j++)
+    {
+        digitalWrite(led2,HIGH);
+        delay(bTime);
+        digitalWrite(led2,LOW);
+        delay(bTime);
+    }
+}
+
+void loop() {
+    byte *inBuff;
+    binaryFloat data;
+    int j;
+    while(!waitHeader()) {}
+    inBuff = inMsg();
+    if(checkMsg(inBuff)) {
+        for(j=0;j<4;j++) {
+            data.binary[j] = inBuff[j];
+        }
+        Serial.write(data.binary,4);
+        analogWrite(led1,map(data.floating,0,100,0,255));
     }
 }
 
