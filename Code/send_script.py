@@ -11,12 +11,14 @@ import serial
 import struct
 import numpy as np
 
-ser = serial.Serial('/dev/ttyUSB0',115200,timeout=None)
-#ser.setDTR(False)
-#time.sleep(1)
-#ser.flushInput()
-#ser.setDTR(True)
-#time.sleep(1)
+ser = serial.Serial('/dev/ttyUSB0',1000000,timeout=None)
+ser.setDTR(False)
+time.sleep(1)
+ser.flushInput()
+ser.setDTR(True)
+time.sleep(5)
+
+ok = 0;
 
 header = chr(0xAA)
 footer = chr(0xBB)
@@ -31,7 +33,10 @@ check = chr(check)
 message = header+data+check+footer
 ser.write(message)
 tic = timeit.default_timer()
-dataBack = ser.read(4)
+while not ok:
+    if ser.inWaiting()>0:
+        dataBack = ser.read(4)
+        ok = 1
 toc = timeit.default_timer()
 print toc-tic
 dataBack = round(struct.unpack('f',dataBack)[0],4)

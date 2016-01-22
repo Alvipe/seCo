@@ -12,7 +12,7 @@ byte check = 0x00;
 int led1 = 9, led2 = 13;
 
 void setup() {
-    Serial.begin(115200);
+    Serial.begin(1000000);
     pinMode(led1, OUTPUT);
     pinMode(led2, OUTPUT);
     digitalWrite(led1, LOW);
@@ -55,9 +55,9 @@ byte * inMsg() {
 
 boolean checkMsg(byte *buff) {
     byte xorChk = 0x00;
-    int j;
-    for(j=0;j<4;j++) {
-        xorChk = xorChk^buff[j];
+    int i;
+    for(i=0;i<4;i++) {
+        xorChk = xorChk^buff[i];
     }
     if(xorChk==check) return true;
     else return false;
@@ -65,8 +65,8 @@ boolean checkMsg(byte *buff) {
 
 void blinkLed(int repeat,int bTime)
 {
-    int j;
-    for(j=0;j<repeat;j++)
+    int i;
+    for(i=0;i<repeat;i++)
     {
         digitalWrite(led2,HIGH);
         delay(bTime);
@@ -75,18 +75,21 @@ void blinkLed(int repeat,int bTime)
     }
 }
 
-void loop() {
+void secoRx() {
     byte *inBuff;
     binaryFloat data;
-    int j;
+    int i;
     while(!waitHeader()) {}
     inBuff = inMsg();
     if(checkMsg(inBuff)) {
-        for(j=0;j<4;j++) {
-            data.binary[j] = inBuff[j];
+        for(i=0;i<4;i++) {
+            data.binary[i] = inBuff[i];
         }
         Serial.write(data.binary,4);
         analogWrite(led1,map(data.floating,0,100,0,255));
     }
 }
 
+void loop() {
+    secoRx();
+}
