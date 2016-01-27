@@ -25,18 +25,39 @@ footer = chr(0xBB)
 check = 0x00
 data = struct.pack('f',float(100.0))
 
-dataBack = ''
-
 for i in range(len(data)):
     check = check^ord(data[i])
 check = chr(check)
 message = header+data+check+footer
 ser.write(message)
-tic = timeit.default_timer()
-while not ok:
-    if ser.inWaiting()>0:
-        dataBack = ser.read(4)
-        ok = 1
-toc = timeit.default_timer()
-print toc-tic
-dataBack = round(struct.unpack('f',dataBack)[0],4)
+
+time.sleep(1)
+
+xorChk = 0x00
+rec = chr(0x00)
+dataSize = 4
+dataBack = ''
+i = 0
+
+while(ser.read() != header): None
+
+while(ser.inWaiting()>0):
+    rec = ser.read()
+    if((rec!=footer) and (i<dataSize)):
+        dataBack = dataBack + rec
+        i += 1
+        if(i == 4):
+            checkBack = ser.read()
+    if(rec == footer):
+        i = 0
+        break
+
+for i in range(len(dataBack)):
+    xorChk = xorChk^ord(dataBack[i])
+xorChk = chr(xorChk)
+
+if(xorChk == checkBack):
+    dataBack = round(struct.unpack('f',dataBack)[0],4)
+    print 'Oh yeah!'
+else:
+    print 'Oh no!'

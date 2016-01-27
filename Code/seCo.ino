@@ -63,19 +63,7 @@ boolean checkMsg(byte *buff) {
     else return false;
 }
 
-void blinkLed(int repeat,int bTime)
-{
-    int i;
-    for(i=0;i<repeat;i++)
-    {
-        digitalWrite(led2,HIGH);
-        delay(bTime);
-        digitalWrite(led2,LOW);
-        delay(bTime);
-    }
-}
-
-void secoRx() {
+float secoRx() {
     byte *inBuff;
     binaryFloat data;
     int i;
@@ -85,11 +73,35 @@ void secoRx() {
         for(i=0;i<4;i++) {
             data.binary[i] = inBuff[i];
         }
-        Serial.write(data.binary,4);
-        analogWrite(led1,map(data.floating,0,100,0,255));
+        return data.floating;
     }
 }
 
+void secoTx(float dataToSend) {
+    binaryFloat data;
+    data.floating = dataToSend;
+    byte message[7];
+    byte xorChk = 0x00;
+    int i, j;
+    for(i=0;i<4;i++) {
+        xorChk = xorChk^data.binary[i];
+    }
+    message[0] = header;
+    for(j=1;j<5;j++) {
+        message[j] = data.binary[j-1];
+    }
+    message[5] = xorChk;
+    message[6] = footer;
+    // Serial.write(header);
+    // Serial.write(data.binary,4);
+    // Serial.write(xorChk);
+    // Serial.write(footer);
+    Serial.write(message,7);
+}
+
 void loop() {
-    secoRx();
+    float data = secoRx();
+    analogWrite(led1,map(data,0,100,0,255));
+    delay(100);
+    secoTx(data);
 }
