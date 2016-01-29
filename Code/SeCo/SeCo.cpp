@@ -1,6 +1,9 @@
+#include "Arduino.h"
+#include "SeCo.h"
+
 #define header 0xAA
 #define footer 0xBB
-#define dataSize 4
+#define dataSize sizeof(float)
 
 typedef union {
     float floating;
@@ -9,17 +12,7 @@ typedef union {
 
 byte check = 0x00;
 
-int led1 = 9, led2 = 13;
-
-void setup() {
-    Serial.begin(1000000);
-    pinMode(led1, OUTPUT);
-    pinMode(led2, OUTPUT);
-    digitalWrite(led1, LOW);
-    digitalWrite(led2, LOW);
-}
-
-boolean waitHeader() {
+boolean SeCo::waitHeader() {
     byte rec;
     while(Serial.available()>0) {
         rec = Serial.read();
@@ -31,7 +24,7 @@ boolean waitHeader() {
     }
 }
 
-byte * inMsg() {
+byte* SeCo::inMsg() {
     byte rec;
     static byte inBuff[4];
     int i = 0;
@@ -53,7 +46,7 @@ byte * inMsg() {
     }
 }
 
-boolean checkMsg(byte *buff) {
+boolean SeCo::checkMsg(byte *buff) {
     byte xorChk = 0x00;
     int i;
     for(i=0;i<4;i++) {
@@ -63,7 +56,7 @@ boolean checkMsg(byte *buff) {
     else return false;
 }
 
-float secoRx() {
+float SeCo::receive() {
     byte *inBuff;
     binaryFloat data;
     int i;
@@ -77,7 +70,7 @@ float secoRx() {
     }
 }
 
-void secoTx(float dataToSend) {
+void SeCo::transmit(float dataToSend) {
     binaryFloat data;
     data.floating = dataToSend;
     byte message[7];
@@ -97,11 +90,4 @@ void secoTx(float dataToSend) {
     // Serial.write(xorChk);
     // Serial.write(footer);
     Serial.write(message,7);
-}
-
-void loop() {
-    float data = secoRx();
-    analogWrite(led1,map(data,0,100,0,255));
-    delay(100);
-    secoTx(data);
 }

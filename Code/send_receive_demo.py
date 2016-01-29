@@ -25,11 +25,14 @@ footer = chr(0xBB)
 check = 0x00
 data = struct.pack('f',float(100.0))
 
+tic = timeit.default_timer()
 for i in range(len(data)):
     check = check^ord(data[i])
 check = chr(check)
 message = header+data+check+footer
 ser.write(message)
+toc = timeit.default_timer()
+print toc-tic
 
 time.sleep(1)
 
@@ -39,6 +42,7 @@ dataSize = 4
 dataBack = ''
 i = 0
 
+tic = timeit.default_timer()
 while(ser.read() != header): None
 
 while(ser.inWaiting()>0):
@@ -61,3 +65,5 @@ if(xorChk == checkBack):
     print 'Oh yeah!'
 else:
     print 'Oh no!'
+toc = timeit.default_timer()
+print toc-tic
