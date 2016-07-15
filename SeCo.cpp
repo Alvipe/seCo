@@ -7,13 +7,13 @@
 
 typedef union {
     float floating;
-    byte binary[dataSize];
+    uint8_t binary[dataSize];
 } binaryFloat;
 
-byte check = 0x00;
+uint8_t check = 0x00;
 
-boolean SeCo::waitHeader() {
-    byte rec;
+bool SeCo::waitHeader() {
+    uint8_t rec;
     while(Serial.available()>0) {
         rec = Serial.read();
         delayMicroseconds(100);
@@ -24,10 +24,10 @@ boolean SeCo::waitHeader() {
     }
 }
 
-byte* SeCo::inMsg() {
-    byte rec;
-    static byte inBuff[4];
-    int i = 0;
+uint8_t* SeCo::inMsg() {
+    uint8_t rec;
+    static uint8_t inBuff[4];
+    unsigned int i = 0;
     while(Serial.available()>0) {
         rec = Serial.read();
         delayMicroseconds(100);
@@ -46,9 +46,9 @@ byte* SeCo::inMsg() {
     }
 }
 
-boolean SeCo::checkMsg(byte *buff) {
-    byte xorChk = 0x00;
-    int i;
+bool SeCo::checkMsg(uint8_t *buff) {
+    uint8_t xorChk = 0x00;
+    unsigned int i;
     for(i=0;i<4;i++) {
         xorChk = xorChk^buff[i];
     }
@@ -57,9 +57,9 @@ boolean SeCo::checkMsg(byte *buff) {
 }
 
 float SeCo::receive() {
-    byte *inBuff;
+    uint8_t *inBuff;
     binaryFloat data;
-    int i;
+    unsigned int i;
     while(!waitHeader()) {}
     inBuff = inMsg();
     if(checkMsg(inBuff)) {
@@ -73,9 +73,9 @@ float SeCo::receive() {
 void SeCo::transmit(float dataToSend) {
     binaryFloat data;
     data.floating = dataToSend;
-    byte message[7];
-    byte xorChk = 0x00;
-    int i, j;
+    uint8_t message[7];
+    uint8_t xorChk = 0x00;
+    unsigned int i, j;
     for(i=0;i<4;i++) {
         xorChk = xorChk^data.binary[i];
     }

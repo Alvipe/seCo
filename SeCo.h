@@ -8,9 +8,9 @@ class SeCo {
         float receive();
         void transmit(float dataToSend);
     private:
-        boolean waitHeader();
-        byte* inMsg();
-        boolean checkMsg(byte *buff);
+        bool waitHeader();
+        uint8_t* inMsg();
+        bool checkMsg(uint8_t *buff);
 };
 
 #endif
