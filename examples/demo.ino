@@ -11,8 +11,10 @@ void setup() {
 }
 
 void loop() {
-    float data = dataLink.receive();
-    analogWrite(led,map(data,0,100,0,255));
+    float data = dataLink.receiveData();
+    float dataArray = dataLink.receiveArray();
+    // analogWrite(led,map(data,0,100,0,255));
     delay(100);
-    dataLink.transmit(data);
+    dataLink.transmitData(data);
+    dataLink.transmitArray(dataArray);
 }

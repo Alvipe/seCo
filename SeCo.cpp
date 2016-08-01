@@ -21,11 +21,12 @@ bool SeCo::waitHeader() {
         }
         else return false;
     }
+    return false;
 }
 
 bool SeCo::checkMessage(uint8_t *message) {
     uint8_t xorCheck = 0x00;
-    messageSize = sizeof(message);
+    unsigned int messageSize = sizeof(message);
     unsigned int i;
     for(i=0;i<messageSize;i++) {
         xorCheck = xorCheck^message[i];
@@ -63,12 +64,13 @@ float SeCo::receiveData() {
     binaryFloat data;
     unsigned int i;
     message = getMessage(1);
-    if(checkMsg(message)) {
+    if(checkMessage(message)) {
         for(i=0;i<4;i++) {
             data.binary[i] = message[i];
         }
         return data.floating;
     }
+    else return NULL;
 }
 
 float* SeCo::receiveArray() {
@@ -78,14 +80,17 @@ float* SeCo::receiveArray() {
     static float dataArray[dataPoints];
     unsigned int i=0, j, k;
     message = getMessage(dataPoints);
-    for(j=0;j<dataPoints;j++) {
-        for(k=0;k<floatSize;k++) {
-            data.binary[k] = message[i];
-            i++;
+    if(checkMessage(message)) {
+        for(j=0;j<dataPoints;j++) {
+            for(k=0;k<floatSize;k++) {
+                data.binary[k] = message[i];
+                i++;
+            }
+            dataArray[j] = data.floating;
         }
-        dataArray[j] = data.floating;
+        return dataArray;
     }
-    return dataArray;
+    else return NULL;
 }
 
 void SeCo::transmitData(float dataToSend) {
@@ -94,12 +99,10 @@ void SeCo::transmitData(float dataToSend) {
     uint8_t message[7];
     uint8_t xorCheck = 0x00;
     unsigned int i, j;
-    for(i=0;i<4;i++) {
-        xorCheck = xorCheck^data.binary[i];
-    }
     message[0] = header;
-    for(j=1;j<5;j++) {
-        message[j] = data.binary[j-1];
+    for(i=1;i<5;i++) {
+        message[i] = data.binary[i-1];
+        xorCheck = xorCheck^data.binary[i-1];
     }
     message[5] = xorCheck;
     message[6] = footer;
@@ -111,12 +114,14 @@ void SeCo::transmitArray(float* arrayToSend) {
     unsigned int dataPoints = sizeof(arrayToSend);
     unsigned int messageSize = floatSize*dataPoints;
     uint8_t message[messageSize+3];
+    uint8_t xorCheck = 0x00;
     message[0] = header;
     unsigned int i=1, j, k;
     for(j=0;j<dataPoints;j++) {
         data.floating = arrayToSend[j];
         for(k=0;k<floatSize;k++) {
             message[i] = data.binary[k];
+            xorCheck = xorCheck^data.binary[k];
             i++;
         }
     }
