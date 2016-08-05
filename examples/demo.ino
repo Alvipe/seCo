@@ -20,6 +20,6 @@ void loop() {
     delay(100);
     dataLink.receiveData(&data);
     delay(100);
-    dataLink.transmitData(data);
+    dataLink.transmitData(&data);
     delay(100);
 }

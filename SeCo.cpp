@@ -93,9 +93,9 @@ void SeCo::receiveArray(float* dataArrayIn, unsigned int dataPoints) {
     }
 }
 
-void SeCo::transmitData(float dataOut) {
+void SeCo::transmitData(float* dataOut) {
     binaryFloat data;
-    data.floating = dataOut;
+    data.floating = *dataOut;
     uint8_t message[7];
     uint8_t xorCheck = 0x00;
     unsigned int i;

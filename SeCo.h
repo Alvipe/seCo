@@ -7,7 +7,7 @@ class SeCo {
     public:
         void receiveData(float* dataIn);
         void receiveArray(float* dataArrayIn, unsigned int dataPoints);
-        void transmitData(float dataOut);
+        void transmitData(float* dataOut);
         void transmitArray(float* dataArrayOut, unsigned int dataPoints);
     private:
         bool waitHeader();
