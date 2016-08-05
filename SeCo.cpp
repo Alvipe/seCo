@@ -3,7 +3,7 @@
 
 static const uint8_t header = 0xAA;
 static const uint8_t footer = 0xBB;
-static const uint8_t floatSize = 4;
+static const unsigned int floatSize = 4;
 uint8_t check = 0x00;
 
 typedef union {
@@ -15,35 +15,38 @@ bool SeCo::waitHeader() {
     uint8_t inByte;
     while(Serial.available()>0) {
         inByte = Serial.read();
-        // delayMicroseconds(100);
+        delayMicroseconds(100);
         if(inByte==header) {
             return true;
         }
-        else return false;
+        else {
+            return false;
+        }
     }
     return false;
 }
 
-bool SeCo::checkMessage(uint8_t *message) {
+bool SeCo::checkMessage(uint8_t *message, unsigned int messageSize) {
     uint8_t xorCheck = 0x00;
-    unsigned int messageSize = sizeof(message);
     unsigned int i;
     for(i=0;i<messageSize;i++) {
         xorCheck = xorCheck^message[i];
     }
-    if(xorCheck==check) return true;
-    else return false;
+    if(xorCheck==check) {
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
-uint8_t* SeCo::getMessage(unsigned int dataPoints) {
-    unsigned int messageSize = floatSize*dataPoints;
-    static uint8_t message[messageSize];
+void SeCo::getMessage(uint8_t* message, unsigned int messageSize) {
     uint8_t inByte;
     unsigned int i=0;
     while(!waitHeader()) {}
     while(Serial.available()>0) {
         inByte= Serial.read();
-        // delayMicroseconds(50);
+        delayMicroseconds(100);
         if((inByte!=footer)&&(i<messageSize)) {
             message[i] = inByte;
             i++;
@@ -52,53 +55,50 @@ uint8_t* SeCo::getMessage(unsigned int dataPoints) {
             check = inByte;
         }
         else if(inByte==footer) {
-            return message;
+            return;
         }
-        else return NULL;
     }
-    return NULL;
 }
 
-float SeCo::receiveData() {
-    uint8_t *message;
+void SeCo::receiveData(float* dataIn) {
+    unsigned int messageSize = floatSize;
+    uint8_t message[messageSize];
     binaryFloat data;
     unsigned int i;
-    message = getMessage(1);
-    if(checkMessage(message)) {
+    getMessage(message, messageSize);
+    if(checkMessage(message, messageSize)) {
         for(i=0;i<4;i++) {
             data.binary[i] = message[i];
         }
-        return data.floating;
+        *dataIn = data.floating;
+        return;
     }
-    else return NULL;
 }
 
-float* SeCo::receiveArray() {
-    uint8_t* message;
+void SeCo::receiveArray(float* dataArrayIn, unsigned int dataPoints) {
+    unsigned int messageSize = floatSize*dataPoints;
+    uint8_t message[messageSize];
     binaryFloat data;
-    unsigned int dataPoints = 100;
-    static float dataArray[dataPoints];
     unsigned int i=0, j, k;
-    message = getMessage(dataPoints);
-    if(checkMessage(message)) {
+    getMessage(message, messageSize);
+    if(checkMessage(message, messageSize)) {
         for(j=0;j<dataPoints;j++) {
             for(k=0;k<floatSize;k++) {
                 data.binary[k] = message[i];
                 i++;
             }
-            dataArray[j] = data.floating;
+            dataArrayIn[j] = data.floating;
         }
-        return dataArray;
+        return;
     }
-    else return NULL;
 }
 
-void SeCo::transmitData(float dataToSend) {
+void SeCo::transmitData(float dataOut) {
     binaryFloat data;
-    data.floating = dataToSend;
+    data.floating = dataOut;
     uint8_t message[7];
     uint8_t xorCheck = 0x00;
-    unsigned int i, j;
+    unsigned int i;
     message[0] = header;
     for(i=1;i<5;i++) {
         message[i] = data.binary[i-1];
@@ -109,23 +109,22 @@ void SeCo::transmitData(float dataToSend) {
     Serial.write(message,7);
 }
 
-void SeCo::transmitArray(float* arrayToSend) {
+void SeCo::transmitArray(float* dataArrayOut, unsigned int dataPoints) {
     binaryFloat data;
-    unsigned int dataPoints = sizeof(arrayToSend);
     unsigned int messageSize = floatSize*dataPoints;
     uint8_t message[messageSize+3];
     uint8_t xorCheck = 0x00;
     message[0] = header;
     unsigned int i=1, j, k;
     for(j=0;j<dataPoints;j++) {
-        data.floating = arrayToSend[j];
+        data.floating = dataArrayOut[j];
         for(k=0;k<floatSize;k++) {
             message[i] = data.binary[k];
             xorCheck = xorCheck^data.binary[k];
             i++;
         }
     }
-    message[401] = xorCheck;
-    message[402] = footer;
-    Serial.write(message,403);
+    message[messageSize+1] = xorCheck;
+    message[messageSize+2] = footer;
+    Serial.write(message,messageSize+3);
 }
