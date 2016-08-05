@@ -1,7 +1,8 @@
 #include <SeCo.h>
 
-long baudRate = 1000000;
-int led = 9;
+unsigned int dataPoints = 50;
+long baudRate = 115200;
+int led = 13;
 SeCo dataLink;
 
 void setup() {
@@ -11,8 +12,14 @@ void setup() {
 }
 
 void loop() {
-    float data = dataLink.receive();
-    analogWrite(led,map(data,0,100,0,255));
+    float dataArray[dataPoints];
+    float data;
+    dataLink.receiveArray(&dataArray[0], dataPoints);
     delay(100);
-    dataLink.transmit(data);
+    dataLink.transmitArray(&dataArray[0], dataPoints);
+    delay(100);
+    dataLink.receiveData(&data);
+    delay(100);
+    dataLink.transmitData(&data);
+    delay(100);
 }

@@ -5,12 +5,14 @@
 
 class SeCo {
     public:
-        float receive();
-        void transmit(float dataToSend);
+        void receiveData(float* dataIn);
+        void receiveArray(float* dataArrayIn, unsigned int dataPoints);
+        void transmitData(float* dataOut);
+        void transmitArray(float* dataArrayOut, unsigned int dataPoints);
     private:
         bool waitHeader();
-        uint8_t* inMsg();
-        bool checkMsg(uint8_t *buff);
+        bool checkMessage(uint8_t* message, unsigned int messageSize);
+        void getMessage(uint8_t* message, unsigned int messageSize);
 };
 
 #endif
