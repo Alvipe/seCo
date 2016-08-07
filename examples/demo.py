@@ -14,6 +14,26 @@ import struct
 header = chr(0xAA)
 footer = chr(0xBB)
 
+def connectToSerial():
+    portname_start = ["/dev/ttyUSB","/dev/ttyACM","COM"]
+    for port in portname_start:
+        for i in range(10):
+            portnum = str(i)
+            portname_full = ''.join([port,portnum])
+            try:
+                ser = serial.Serial(portname_full, 115200, timeout=1)
+                break
+            except:
+                if(i == 9 and port == "COM"):
+                    print("No serial port found")
+                    sys.exit(0)
+    ser.setDTR(False)
+    time.sleep(1)
+    ser.flushInput()
+    ser.setDTR(True)
+    time.sleep(5)
+    return ser
+
 def checkMessage(message, check):
     xorCheck = 0x00
     for i in range(len(message)):
@@ -87,31 +107,15 @@ def transmitList(listToSend):
     message += check + footer
     ser.write(message)
 
-portname_start = ["/dev/ttyUSB","/dev/ttyACM","COM"]
-for port in portname_start:
-    for i in range(10):
-        portnum = str(i)
-        portname_full = ''.join([port,portnum])
-        try:
-            ser = serial.Serial(portname_full, 115200, timeout=1)
-            break
-        except:
-            if(i == 9 and port == "COM"):
-                print("No serial port found")
-                sys.exit(0)
+dataPoints = 50
+dataListOut = []
+for i in range(dataPoints):
+    dataListOut.append(1+i/10.0)
+dataOut = 1.2345
 
-ser.setDTR(False)
-time.sleep(1)
-ser.flushInput()
-ser.setDTR(True)
-time.sleep(5)
+ser = connectToSerial()
 
 while(1):
-    dataPoints = 50
-    dataListOut = []
-    for i in range(dataPoints):
-        dataListOut.append(1+i/10.0)
-    dataOut = 1.2345
     transmitList(dataListOut)
     time.sleep(0.2)
     dataListIn = receiveList(dataPoints)
