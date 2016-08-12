@@ -1,20 +1,23 @@
 #include "Arduino.h"
 #include "SeCo.h"
 
-static const uint8_t header = 0xAA;
-static const uint8_t footer = 0xBB;
+static const uint8_t header = 0x7E;
+static const uint8_t footer = 0x7E;
 static const unsigned int floatSize = 4;
-uint8_t check = 0x00;
 
 typedef union {
     float floating;
     uint8_t binary[floatSize];
 } binaryFloat;
 
+SeCo::SeCo(Stream &serial) {
+    _serial = &serial;
+}
+
 bool SeCo::waitHeader() {
     uint8_t inByte;
-    while(Serial.available()>0) {
-        inByte = Serial.read();
+    while(_serial->available()>0) {
+        inByte = _serial->read();
         delayMicroseconds(100);
         if(inByte==header) {
             return true;
@@ -44,8 +47,8 @@ void SeCo::getMessage(uint8_t* message, unsigned int messageSize) {
     uint8_t inByte;
     unsigned int i=0;
     while(!waitHeader()) {}
-    while(Serial.available()>0) {
-        inByte= Serial.read();
+    while(_serial->available()>0) {
+        inByte= _serial->read();
         delayMicroseconds(100);
         if((inByte!=footer)&&(i<messageSize)) {
             message[i] = inByte;
@@ -60,7 +63,7 @@ void SeCo::getMessage(uint8_t* message, unsigned int messageSize) {
     }
 }
 
-void SeCo::receiveData(float* dataIn) {
+void SeCo::readData(float* dataIn) {
     unsigned int messageSize = floatSize;
     uint8_t message[messageSize];
     binaryFloat data;
@@ -75,7 +78,7 @@ void SeCo::receiveData(float* dataIn) {
     }
 }
 
-void SeCo::receiveArray(float* dataArrayIn, unsigned int dataPoints) {
+void SeCo::readArray(float* dataArrayIn, unsigned int dataPoints) {
     unsigned int messageSize = floatSize*dataPoints;
     uint8_t message[messageSize];
     binaryFloat data;
@@ -93,7 +96,7 @@ void SeCo::receiveArray(float* dataArrayIn, unsigned int dataPoints) {
     }
 }
 
-void SeCo::transmitData(float* dataOut) {
+void SeCo::writeData(float* dataOut) {
     binaryFloat data;
     data.floating = *dataOut;
     uint8_t message[7];
@@ -106,10 +109,10 @@ void SeCo::transmitData(float* dataOut) {
     }
     message[5] = xorCheck;
     message[6] = footer;
-    Serial.write(message,7);
+    _serial->write(message,7);
 }
 
-void SeCo::transmitArray(float* dataArrayOut, unsigned int dataPoints) {
+void SeCo::writeArray(float* dataArrayOut, unsigned int dataPoints) {
     binaryFloat data;
     unsigned int messageSize = floatSize*dataPoints;
     uint8_t message[messageSize+3];
@@ -126,5 +129,5 @@ void SeCo::transmitArray(float* dataArrayOut, unsigned int dataPoints) {
     }
     message[messageSize+1] = xorCheck;
     message[messageSize+2] = footer;
-    Serial.write(message,messageSize+3);
+    _serial->write(message,messageSize+3);
 }

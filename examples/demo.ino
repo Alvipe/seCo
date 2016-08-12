@@ -2,24 +2,21 @@
 
 unsigned int dataPoints = 50;
 long baudRate = 115200;
-int led = 13;
-SeCo dataLink;
+SeCo dataLink(Serial);
 
 void setup() {
     Serial.begin(baudRate);
-    pinMode(led, OUTPUT);
-    digitalWrite(led, LOW);
 }
 
 void loop() {
     float dataArray[dataPoints];
     float data;
-    dataLink.receiveArray(&dataArray[0], dataPoints);
+    dataLink.readArray(&dataArray[0], dataPoints);
     delay(100);
-    dataLink.transmitArray(&dataArray[0], dataPoints);
+    dataLink.writeArray(&dataArray[0], dataPoints);
     delay(100);
-    dataLink.receiveData(&data);
+    dataLink.readData(&data);
     delay(100);
-    dataLink.transmitData(&data);
+    dataLink.writeData(&data);
     delay(100);
 }
