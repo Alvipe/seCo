@@ -11,10 +11,10 @@ import time
 import serial
 import struct
 
-header = chr(0xAA)
-footer = chr(0xBB)
+header = chr(0x7E)
+footer = chr(0x7E)
 
-def connectToSerial():
+def connect_to_serial():
     portname_start = ["/dev/ttyUSB","/dev/ttyACM","COM"]
     for port in portname_start:
         for i in range(10):
@@ -34,72 +34,71 @@ def connectToSerial():
     time.sleep(5)
     return ser
 
-def checkMessage(message, check):
-    xorCheck = 0x00
+def check_message(message, check):
+    xor_check = 0x00
     for i in range(len(message)):
         for j in range(len(message[i])):
-            xorCheck = xorCheck^ord(message[i][j])
-    xorCheck = chr(xorCheck)
-    if(xorCheck==check):
+            xor_check = xor_check^ord(message[i][j])
+    xor_check = chr(xor_check)
+    if(xor_check==check):
         return True
     else:
         return False
 
-def getMessage(dataPoints):
+def get_message(data_points):
     message = ''
-    messageSize = dataPoints*4
-    inByte = chr(0x00)
+    message_size = data_points*4
+    in_byte = chr(0x00)
     i = 0
     while(ser.read()!=header): None
     while(ser.inWaiting()>0):
-        inByte = ser.read()
-        if(inByte!=footer and i<messageSize):
-            message += inByte
+        in_byte = ser.read()
+        if(in_byte!=footer and i<message_size):
+            message += in_byte
             i += 1
-        elif(inByte!=footer and i==messageSize):
-            check = inByte
-        elif(inByte==footer):
+        elif(in_byte!=footer and i==message_size):
+            check = in_byte
+        elif(in_byte==footer):
             return message, check
 
-def receiveData():
-    message, check = getMessage(1)
-    if(checkMessage(message,check)):
+def read_data():
+    message, check = get_message(1)
+    if(check_message(message,check)):
         data = round(struct.unpack('f',message)[0],4)
         return data
     else:
         return None
 
-def receiveList(dataPoints):
-    message, check = getMessage(dataPoints)
-    dataList = []
+def read_list(data_points):
+    message, check = get_message(data_points)
+    data_list = []
     i = 0
-    if(checkMessage(message,check)):
-        for j in range(dataPoints):
+    if(check_message(message,check)):
+        for j in range(data_points):
             data = ''
             for k in range(4):
                 data += message[i]
                 i += 1
             data = round(struct.unpack('f',data)[0],4)
-            dataList.append(data)
-        return dataList
+            data_list.append(data)
+        return data_list
     else:
         return None
 
-def transmitData(dataToSend):
+def write_data(data_out):
     check = 0x00
-    data = struct.pack('f',float(dataToSend))
+    data = struct.pack('f',float(data_out))
     for i in range(len(data)):
         check = check^ord(data[i])
     check = chr(check)
     message = header+data+check+footer
     ser.write(message)
 
-def transmitList(listToSend):
-    data = ''
+def write_list(list_out):
     check = 0x00
     message = header
-    for i in range(len(listToSend)):
-        data = struct.pack('f',float(listToSend[i]))
+    for i in range(len(list_out)):
+        data = struct.pack('f',float(list_out[i]))
         message += data
         for j in range(len(data)):
             check = check^ord(data[j])
@@ -107,28 +106,28 @@ def transmitList(listToSend):
     message += check + footer
     ser.write(message)
 
-dataPoints = 50
-dataListOut = []
-for i in range(dataPoints):
-    dataListOut.append(1+i/10.0)
-dataOut = 1.2345
+data_points = 50
+list_out = []
+for i in range(data_points):
+    list_out.append(1+i/10.0)
+data_out = 1.2345
 
-ser = connectToSerial()
+ser = connect_to_serial()
 
 while(1):
-    transmitList(dataListOut)
+    write_list(list_out)
     time.sleep(0.2)
-    dataListIn = receiveList(dataPoints)
+    list_in = read_list(data_points)
     time.sleep(0.2)
-    if dataListOut == dataListIn:
+    if list_out == list_in:
         print("List received OK")
     else:
         print("List reception failed")
-    transmitData(dataOut)
+    write_data(data_out)
     time.sleep(0.2)
-    dataIn = receiveData()
+    data_in = read_data()
     time.sleep(0.2)
-    if dataOut == dataIn:
+    if data_out == data_in:
         print("Data received OK")
     else:
         print("Data reception failed")
