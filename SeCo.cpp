@@ -99,7 +99,8 @@ void SeCo::readArray(float* dataArrayIn, unsigned int dataPoints) {
 void SeCo::writeData(float* dataOut) {
     binaryFloat data;
     data.floating = *dataOut;
-    uint8_t message[7];
+    unsigned int messageSize = floatSize;
+    uint8_t message[messageSize+3];
     uint8_t xorCheck = 0x00;
     unsigned int i;
     message[0] = header;
@@ -107,9 +108,9 @@ void SeCo::writeData(float* dataOut) {
         message[i] = data.binary[i-1];
         xorCheck = xorCheck^data.binary[i-1];
     }
-    message[5] = xorCheck;
-    message[6] = footer;
-    _serial->write(message,7);
+    message[messageSize+1] = xorCheck;
+    message[messageSize+2] = footer;
+    _serial->write(message,messageSize+3);
 }
 
 void SeCo::writeArray(float* dataArrayOut, unsigned int dataPoints) {
